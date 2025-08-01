@@ -1,0 +1,116 @@
+name: Test action
+
+on:
+  push:
+    branches: "main"
+    paths-ignore:
+      - .gitignore
+      - README.md
+      - LICENSE
+
+  pull_request:
+    paths-ignore:
+      - .gitignore
+      - README.md
+      - LICENSE
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test-download:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        shiroa-version:
+          # Test oldest allowed version
+          - version: 0.2.0
+            allow-prereleases: false
+
+          # Test latest version with pre releases
+          - version: latest
+            allow-prereleases: true
+
+          # Test known range
+          - version: 0.2.x
+            allow-prereleases: true
+
+          # Test pre-release (allow-prereleases doesn't apply to full version)
+          - version: 0.3.1-rc2
+            allow-prereleases: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Override dist with build
+        shell: bash
+        run: |
+          rm -rf dist
+          mv build dist
+
+      - name: Run action
+        uses: ./
+        with:
+          shiroa-version: ${{ matrix.shiroa-version.version }}
+          allow-prereleases: ${{ matrix.shiroa-version.allow-prereleases }}
+
+      - name: Run `shiroa --version`
+        run: shiroa --version
+
+  test-shiroa:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Override dist with build
+        run: |
+          rm -rf dist
+          mv build dist
+
+      - name: Run action
+        uses: ./
+        with:
+          shiroa-version: 0.3.0
+
+      - name: Run `shiroa build`
+        run: shiroa build test/book
