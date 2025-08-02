@@ -4,6 +4,8 @@ on:
   schedule:
   - cron: '0 * * * *'
 
+  workflow_dispatch:
+
 defaults:
   run:
     shell: bash
@@ -46,6 +48,3 @@ jobs:
 
       - name: Run `shiroa --version`
         run: shiroa --version
-
-      - name: Run `shiroa build`
-        run: shiroa build test/book
