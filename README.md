@@ -1,5 +1,5 @@
 # Setup Shiroa
-This action provides the Shiroa CLI to subsequent steps in GitHub Actions.
+This action provides the [Shiroa] CLI to subsequent steps in GitHub Actions.
 
 ```yaml
 - uses: typst-community/setup-shiroa@v1
@@ -32,4 +32,4 @@ A contribution guide can be found [here](docs/CONTRIBUTING.md). You can view the
 This action is in large part inspired by [setup-typst].
 
 [setup-typst]: https://github.com/typst-community/setup-typst
-[Myriad-Dreamin/shiroa]: https://github.com/Myriad-Dreamin/shiroa
+[Shiroa]: https://github.com/Myriad-Dreamin/shiroa
