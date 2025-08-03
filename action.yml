@@ -11,7 +11,7 @@ inputs:
       The GitHub token to use when pulling versions from Myriad-Dreamin/shiroa.
       By default this should cover all cases. You shouldn't have to touch this
       setting.
-    default: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+    default: ${{ github.token }}
   shiroa-version:
     description: >
       The version of Typst to install. This can be an exact version like
