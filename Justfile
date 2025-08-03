@@ -28,9 +28,8 @@ check: install
 	@npm run lint
 
 # Update the compiled action in dist (for releases)
-update: clean install
-	@echo "{{prompt}} Updating "
-	@npm run build
+update: clean install check
+	@echo "{{prompt}} Updating dist"
 	@rm --recursive --force {{ root / 'dist' }}
 	@cp --recursive {{ root / 'build ' }} {{ root / 'dist' }}
 
