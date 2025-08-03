@@ -12,7 +12,7 @@ alias fmt := format
 default:
 	@just --list --unsorted
 
-# Build the action locally
+# Install the action dependencies
 install:
 	@echo "{{prompt}} Installing dependencies"
 	@npm clean-install
