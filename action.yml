@@ -12,12 +12,14 @@ inputs:
       By default this should cover all cases. You shouldn't have to touch this
       setting.
     default: ${{ github.token }}
+
   shiroa-version:
     description: >
       The version of Typst to install. This can be an exact version like
       '0.10.0' or a semver range like '0.10' or '0.x'. You can also specify
       'latest' to always use the latest version. The default is 'latest'.
     default: latest
+
   allow-prereleases:
     description: >
       Whether to allow prereleases when using `latest` or ranges in
@@ -27,8 +29,9 @@ inputs:
 outputs:
   shiroa-version:
     description: >
-      The version of Typst that was installed. This will be something like
+      The version of Shiroa that was installed. This will be something like
       '0.10.0' or similar.
+
   cache-hit:
     description: >
       Whether Shiroa was restored from the runner's cache or downloaded.
