@@ -2,6 +2,7 @@
 ## Highlights
 
 ## Changes
+- Simplify debug logging
 
 ## Fixes
 
