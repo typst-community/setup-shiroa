@@ -12,36 +12,32 @@ const repoSet = {
 };
 
 async function listShiroaReleases(octokit: any) {
-  core.debug(
-    `Fetching releases list for repository '${repoSet.owner}/${repoSet.repo}'`,
-  );
-
   if (octokit) {
-    core.debug(`Fetching releases with authentication`);
-    return await octokit.paginate(octokit.rest.repos.listReleases, repoSet);
-  } else {
-    const releasesUrl = `https://api.github.com/repos/${repoSet.owner}/${repoSet.repo}/releases`;
+    core.debug("Using authentication");
+    core.debug(`Using repository: ${repoSet.owner}/${repoSet.repo}`);
+    const response = await octokit.paginate(octokit.rest.repos.listReleases, repoSet);
+    core.debug(`Received response: ${response}`);
+    return response;
+  }
 
-    core.debug(
-      `Fetching releases list from '${releasesUrl}' without authentication`,
+  const releasesUrl = `https://api.github.com/repos/${repoSet.owner}/${repoSet.repo}/releases`;
+
+  core.debug("Using no authentication");
+  core.debug(`Using API endpoint: ${releasesUrl}`);
+
+  let response = await tc.downloadTool(releasesUrl);
+  response = fs.readFileSync(response, "utf8");
+  core.debug(`Received response: ${response}`);
+
+  try {
+    return JSON.parse(response);
+  } catch (error) {
+    core.setFailed(
+      `Failed to parse releases from ${releasesUrl}: ${
+        (error as Error).message
+      }. This may be caused by API rate limit exceeded.`,
     );
-
-    const releasesResponse = await tc.downloadTool(releasesUrl);
-
-    try {
-      core.debug(`Downloaded releases from ${releasesUrl}.`);
-      const releases = JSON.parse(fs.readFileSync(releasesResponse, "utf8"));
-      core.debug(`Fetched releases from ${releases}`);
-
-      return releases;
-    } catch (error) {
-      core.setFailed(
-        `Failed to parse releases from ${releasesUrl}: ${
-          (error as Error).message
-        }. This may be caused by API rate limit exceeded.`,
-      );
-      process.exit(1);
-    }
+    process.exit(1);
   }
 }
 
@@ -53,7 +49,7 @@ async function getExactShiroaVersion(
   core.debug(
     `Resolving version '${version}' ${
       allowPrereleases ? "with" : "without"
-    } pre-releases`,
+    } pre-releases from ${releases.length} releases`,
   );
 
   const versions = releases
@@ -67,12 +63,12 @@ async function getExactShiroaVersion(
   );
 
   if (!resolvedVersion) {
-    core.setFailed(`Shiroa v${version} could not be resolved.`);
+    core.setFailed(`Shiroa ${version} could not be resolved.`);
     process.exit(1);
   }
 
   core.debug(
-    `Resolved version '${resolvedVersion}' from '${version}' ${
+    `Resolved version ${resolvedVersion} from ${version} ${
       allowPrereleases ? "with" : "without"
     } pre-releases`,
   );
@@ -86,7 +82,7 @@ async function downloadShiroa(version: string) {
     process.exit(1);
   }
 
-  core.debug(`Fetching Shiroa v${version}`);
+  core.debug(`Fetching Shiroa ${version}`);
 
   const baseUrl = `https://github.com/${repoSet.owner}/${repoSet.repo}`;
 
@@ -117,29 +113,25 @@ async function downloadShiroa(version: string) {
   };
 
   const currentPlatform = process.platform.toString();
-  core.debug(`Detected platform '${currentPlatform}'`);
+  core.debug(`Detected platform: ${currentPlatform}`);
 
   const currentArch = process.arch.toString();
-  core.debug(`Detected architecture '${currentArch}'`);
+  core.debug(`Detected architecture: ${currentArch}`);
 
   const target = artifacts[currentPlatform]![currentArch]!;
-  core.debug(`Determined archive target '${target}'`);
+  core.debug(`Determined archive target: ${target}`);
 
   const extension = extensions[currentPlatform]!;
-  core.debug(`Determined archive extension '${extension}'`);
+  core.debug(`Determined archive extension: ${extension}`);
 
   const directory = `shiroa-${target}`;
   const file = `${directory}.${extension}`;
-
-  core.debug(
-    `Downloading release archive version '${version}' target '${target}'`,
-  );
 
   found = await tc.downloadTool(
     `${baseUrl}/releases/download/v${version}/${file}`,
   );
 
-  core.debug(`Downloaded archive to ${found}`);
+  core.debug(`Downloaded archive: ${found}`);
 
   if (!found.endsWith(extension)) {
     core.debug(`Renaming archive to include extension '${extension}'`);
@@ -163,7 +155,7 @@ async function downloadShiroa(version: string) {
     found = await tc.extractTar(found, undefined, "xz");
   }
 
-  core.debug(`Extracted v${version} extracted to ${found}`);
+  core.debug(`Extracted Shiroa ${version} to ${found}`);
 
   if (currentPlatform != "win32") {
     found = path.join(found, directory);
@@ -190,12 +182,12 @@ if (version == "latest" || !/\d+\.\d+\.\d+/.test(version)) {
 let found = tc.find("shiroa", version);
 
 if (found) {
-  core.info(`Shiroa v${version} retrieved from cache at ${found}`);
+  core.info(`Shiroa ${version} retrieved from cache: ${found}`);
   core.setOutput("cache-hit", found);
 } else {
   found = await downloadShiroa(version);
   found = await tc.cacheDir(found, "shiroa", version);
-  core.info(`Shiroa v${version} added to cache at ${found}`);
+  core.info(`Shiroa v${version} added to cache: ${found}`);
 }
 
 core.addPath(found);
